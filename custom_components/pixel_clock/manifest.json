@@ -1,0 +1,20 @@
+{
+  "domain": "pixel_clock",
+  "name": "Pixel Clock (iPixel Color)",
+  "bluetooth": [
+    {
+      "local_name": "LED_BLE_*",
+      "connectable": true
+    }
+  ],
+  "codeowners": ["@clumsonite"],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters"],
+  "after_dependencies": ["calendar"],
+  "documentation": "https://github.com/clumsonite/ha-pixelbrei",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/clumsonite/ha-pixelbrei/issues",
+  "requirements": ["Pillow>=10.0.0"],
+  "version": "0.2.0"
+}

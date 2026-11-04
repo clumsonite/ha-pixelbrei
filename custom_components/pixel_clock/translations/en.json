@@ -23,7 +23,13 @@
         "title": "Panel settings",
         "description": "Add the pages themselves under the integration with \"Add page\".",
         "data": {
-          "color": "Default text colour"
+          "color": "Default text colour",
+          "quiet_from": "Quiet time from",
+          "quiet_until": "Quiet time until"
+        },
+        "data_description": {
+          "quiet_from": "During the quiet time the panel is off and shows no notifications either, e.g. 22:00.",
+          "quiet_until": "End of the quiet time, e.g. 06:00. Both empty = no quiet time."
         }
       }
     }
@@ -43,6 +49,9 @@
       }
     },
     "number": {
+      "brightness": {
+        "name": "Brightness"
+      },
       "app_duration": {
         "name": "App duration"
       }
@@ -242,7 +251,10 @@
             "progress_entity": "Progress from entity",
             "done_text": "Message at the end",
             "calendars": "Calendars",
-            "days": "Look ahead (days)"
+            "days": "Look ahead (days)",
+            "forecast": "Today's forecast instead of the current temperature",
+            "show_from": "Show from",
+            "show_until": "Show until"
           },
           "data_description": {
             "icon": "Built-in icon, LaMetric icon number or image file (/config/www/…).",
@@ -254,7 +266,10 @@
             "above": "Or: the page shows while the value is above, e.g. power > 5 W.",
             "off_delay": "The page stays this long after the end (washing machine pauses).",
             "text": "Empty = page name. Templates allowed, e.g. {{ states('sensor.remaining') }} min.",
-            "done_text": "Optional: notification when the status ends, e.g. \"Washing machine done!\"."
+            "done_text": "Optional: notification when the status ends, e.g. \"Washing machine done!\".",
+            "forecast": "Shows today's high and low, e.g. 14°/6°, with the icon of the daily forecast.",
+            "show_from": "Optional: the page appears from this time on.",
+            "show_until": "Optional: the page disappears at this time. Past midnight works too, e.g. 22:00 to 06:00."
           }
         }
       },

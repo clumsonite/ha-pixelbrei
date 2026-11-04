@@ -189,6 +189,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PixelClockConfigEntry) -
             hass.config_entries.async_add_subentry(entry, app)
         hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_DEFAULT_APPS: True})
     _detach_from_subentries(hass, entry)
+    _remove_switches_of_deleted_apps(hass, entry)
     coordinator = PixelClockCoordinator(hass, entry)
     entry.runtime_data = coordinator
     coordinator.loaded_apps = set(coordinator.apps)
@@ -212,6 +213,15 @@ def _detach_from_subentries(hass: HomeAssistant, entry: PixelClockConfigEntry) -
     for device in dr.async_entries_for_config_entry(devices, entry.entry_id):
         if device.config_subentry_id is not None:
             devices.async_update_device(device.id, new_config_subentry_id=None)
+
+
+def _remove_switches_of_deleted_apps(hass: HomeAssistant, entry: PixelClockConfigEntry) -> None:
+    """A deleted app leaves its switch behind as "unavailable" in the registry: remove it."""
+    entities = er.async_get(hass)
+    prefix = f"{entry.unique_id}_app_"
+    for ent in er.async_entries_for_config_entry(entities, entry.entry_id):
+        if ent.unique_id.startswith(prefix) and ent.unique_id.removeprefix(prefix) not in entry.subentries:
+            entities.async_remove(ent.entity_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PixelClockConfigEntry) -> bool:

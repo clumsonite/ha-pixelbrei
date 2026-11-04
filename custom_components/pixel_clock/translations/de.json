@@ -23,7 +23,13 @@
         "title": "Display-Einstellungen",
         "description": "Die Seiten selbst richtest du unter der Integration mit „Seite hinzufügen“ ein.",
         "data": {
-          "color": "Standard-Textfarbe"
+          "color": "Standard-Textfarbe",
+          "quiet_from": "Ruhezeit ab",
+          "quiet_until": "Ruhezeit bis"
+        },
+        "data_description": {
+          "quiet_from": "In der Ruhezeit ist das Display aus und zeigt auch keine Benachrichtigungen, z. B. 22:00.",
+          "quiet_until": "Ende der Ruhezeit, z. B. 06:00. Beide Felder leer = keine Ruhezeit."
         }
       }
     }
@@ -43,6 +49,9 @@
       }
     },
     "number": {
+      "brightness": {
+        "name": "Helligkeit"
+      },
       "app_duration": {
         "name": "Anzeigedauer pro App"
       }
@@ -242,7 +251,10 @@
             "progress_entity": "Fortschritt aus Entität",
             "done_text": "Meldung beim Ende",
             "calendars": "Kalender",
-            "days": "Vorschau (Tage)"
+            "days": "Vorschau (Tage)",
+            "forecast": "Tagesvorhersage statt aktueller Temperatur",
+            "show_from": "Anzeigen ab",
+            "show_until": "Anzeigen bis"
           },
           "data_description": {
             "icon": "Eingebautes Symbol, LaMetric-Icon-Nummer oder Bilddatei (/config/www/…).",
@@ -254,7 +266,10 @@
             "above": "Oder: Seite erscheint, solange der Wert darüber liegt, z. B. Leistung > 5 W.",
             "off_delay": "So lange bleibt die Seite nach dem Ende stehen (Pausen der Waschmaschine).",
             "text": "Leer = Name der Seite. Templates erlaubt, z. B. {{ states('sensor.restzeit') }} min.",
-            "done_text": "Optional: Benachrichtigung, wenn der Status endet, z. B. „Waschmaschine fertig!“."
+            "done_text": "Optional: Benachrichtigung, wenn der Status endet, z. B. „Waschmaschine fertig!“.",
+            "forecast": "Zeigt Höchst- und Tiefstwert von heute, z. B. 14°/6°, mit dem Symbol der Tagesvorhersage.",
+            "show_from": "Optional: Die Seite erscheint erst ab dieser Uhrzeit.",
+            "show_until": "Optional: Die Seite verschwindet ab dieser Uhrzeit. Über Mitternacht geht auch, z. B. 22:00 bis 06:00."
           }
         }
       },

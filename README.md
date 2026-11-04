@@ -30,7 +30,7 @@ starts with clock and date.
 |---|---|---|
 | **Clock** | big HH:MM with blinking colon, small running seconds, 2 px weekday bar (today highlighted) | seconds, weekday bar |
 | **Date** | weekday and date | |
-| **Weather** | condition icon and temperature | weather entity |
+| **Weather** | condition icon and temperature, or today's high/low (e.g. 14°/6°) | weather entity, today's forecast |
 | **Value** | any entity – temperature, battery, CO₂ … | label, unit, decimals, progress bar (min/max) |
 | **Power** | consumption, yellow from 1 kW, red from 3 kW, green with solar icon when feeding in | power sensor |
 | **Status** | a page only while something is active, e.g. "washing machine running" | active states or "above value", hold time for pauses, text (templates allowed), progress entity, message when it ends |
@@ -39,6 +39,18 @@ starts with clock and date.
 
 The page on screen follows its entity live (at most one update per second). Text that does not
 fit scrolls; a line break gives two lines.
+
+### Day plan: time windows and quiet time
+
+Every page has optional **Show from** / **Show until** times; outside its window it leaves the
+rotation (windows past midnight work too). The panel's **Configure** (⚙) sets a **quiet time**:
+the panel is off and drops notifications, e.g. 22:00–06:00. Example:
+
+| Time | Pages |
+|---|---|
+| 06:00–17:00 | Weather with today's forecast (show from 06:00 until 17:00) |
+| 17:00–22:00 | Clock and date (show from 17:00 until 22:00) |
+| 22:00–06:00 | quiet time, panel off |
 
 ### Background effects
 
@@ -114,6 +126,7 @@ Apps cover most cases. For pages driven by your own automations, import a bluepr
 | Entity | |
 |---|---|
 | Light | Power and brightness |
+| Number *Brightness* | Brightness as a slider on the device page |
 | Switch *Page &lt;name&gt;* | One per app: show it on this panel or not |
 | Switch *Automation page &lt;name&gt;* | One per page set by an automation (`pixel_clock.set_app`) |
 | Image *Preview* | Live picture of what the panel shows (animated while text scrolls) – put it on a dashboard with a picture entity card |

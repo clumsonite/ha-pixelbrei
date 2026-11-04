@@ -33,6 +33,7 @@ from .const import (
     A_EFFECT,
     A_ENABLED,
     A_ENTITY,
+    A_FORECAST,
     A_ICON,
     A_LABEL,
     A_MAX,
@@ -41,6 +42,8 @@ from .const import (
     A_PROGRESS,
     A_PROGRESS_ENTITY,
     A_SECONDS,
+    A_SHOW_FROM,
+    A_SHOW_UNTIL,
     A_TEXT,
     A_TYPE,
     A_UNIT,
@@ -48,6 +51,8 @@ from .const import (
     APP_TYPES,
     CONF_COLOR,
     CONF_HEIGHT,
+    CONF_QUIET_FROM,
+    CONF_QUIET_UNTIL,
     CONF_WIDTH,
     DEFAULT_CALENDAR_DAYS,
     DOMAIN,
@@ -174,6 +179,12 @@ TYPE_SELECTOR = selector.SelectSelector(selector.SelectSelectorConfig(
 ))
 STATES_SELECTOR = selector.TextSelector(selector.TextSelectorConfig(multiple=True))
 TEXT_SELECTOR = selector.TextSelector(selector.TextSelectorConfig(multiline=False))
+TIME_SELECTOR = selector.TimeSelector()
+
+
+def _optional_time(key: str, values: Mapping[str, Any]) -> vol.Optional:
+    """Optional time field that can be emptied again (suggested value instead of a default)."""
+    return vol.Optional(key, description={"suggested_value": values[key]} if values.get(key) else {})
 
 # default page names per type (the subentry title, editable)
 DEFAULT_TITLES = {
@@ -197,7 +208,10 @@ def _type_fields(kind: str, d: Mapping[str, Any]) -> dict:
     if kind == T_CLOCK:
         return {req(A_SECONDS, True): bool, req(A_WEEKDAY_BAR, True): bool}
     if kind == T_WEATHER:
-        return {req(A_ENTITY, None) if d.get(A_ENTITY) else vol.Required(A_ENTITY): _entity("weather")}
+        return {
+            req(A_ENTITY, None) if d.get(A_ENTITY) else vol.Required(A_ENTITY): _entity("weather"),
+            req(A_FORECAST, False): bool,
+        }
     if kind == T_POWER:
         return {req(A_ENTITY, None) if d.get(A_ENTITY) else vol.Required(A_ENTITY): _entity("sensor", device_class="power")}
     if kind == T_VALUE:
@@ -275,6 +289,8 @@ class AppSubentryFlow(ConfigSubentryFlow):
         fields[vol.Optional(A_COLOR, description={"suggested_value": current[A_COLOR]} if current.get(A_COLOR) else {})] = \
             selector.ColorRGBSelector()
         fields[vol.Required(A_EFFECT, default=current.get(A_EFFECT, "none"))] = EFFECT_SELECTOR
+        fields[_optional_time(A_SHOW_FROM, current)] = TIME_SELECTOR
+        fields[_optional_time(A_SHOW_UNTIL, current)] = TIME_SELECTOR
         return self.async_show_form(
             step_id="app",
             data_schema=vol.Schema(fields),
@@ -289,11 +305,14 @@ class PixelClockOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
-        color = self.config_entry.options.get(CONF_COLOR)
+        options = self.config_entry.options
+        color = options.get(CONF_COLOR)
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
                 vol.Optional(CONF_COLOR, description={"suggested_value": color} if color else {}):
                     selector.ColorRGBSelector(),
+                _optional_time(CONF_QUIET_FROM, options): TIME_SELECTOR,
+                _optional_time(CONF_QUIET_UNTIL, options): TIME_SELECTOR,
             }),
         )

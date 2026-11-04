@@ -28,7 +28,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 from PIL import Image
 
-from . import icons, render
+from . import icons, render, schedule
 from . import protocol as proto
 from .const import (
     A_ABOVE,
@@ -41,6 +41,7 @@ from .const import (
     A_EFFECT,
     A_ENABLED,
     A_ENTITY,
+    A_FORECAST,
     A_ICON,
     A_LABEL,
     A_MAX,
@@ -49,6 +50,8 @@ from .const import (
     A_PROGRESS,
     A_PROGRESS_ENTITY,
     A_SECONDS,
+    A_SHOW_FROM,
+    A_SHOW_UNTIL,
     A_TEXT,
     A_TYPE,
     A_UNIT,
@@ -58,16 +61,20 @@ from .const import (
     CALENDAR_REFRESH,
     CONF_COLOR,
     CONF_HEIGHT,
+    CONF_QUIET_FROM,
+    CONF_QUIET_UNTIL,
     CONF_WIDTH,
     DEFAULT_APP_SECONDS,
     DEFAULT_BRIGHTNESS,
     DEFAULT_CALENDAR_DAYS,
     DEFAULT_NOTIFY_SECONDS,
     DOMAIN,
+    FORECAST_REFRESH,
     ICON_AUTO,
     ICON_NONE,
     MODE_APPS,
     MODE_CLOCK,
+    QUIET_CHECK_SECONDS,
     RETRY_SECONDS,
     SUBENTRY_APP,
     T_CALENDAR,
@@ -160,6 +167,8 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         self._shown: _Shown | None = None
         self._native_clock_shown = False
         self._settings_applied = False
+        self._quiet_applied = False  # the panel was switched off for the quiet time
+        self._forecasts: dict[str, tuple[datetime, dict[str, Any] | None]] = {}
         self._last_time_sync: datetime | None = None
         self._calendar_cache: dict[tuple[tuple[str, ...], int], tuple[datetime | None, list[dict[str, Any]]]] = {}
         self._status: dict[str, dict[str, Any]] = {}
@@ -261,6 +270,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._shown = None
                 self._native_clock_shown = False
                 self._settings_applied = False
+                self._quiet_applied = False
                 await self.client.async_disconnect()
                 self._set_available(False)
                 await self._sleep(delay)
@@ -291,13 +301,39 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self._last_time_sync = now
             self._native_clock_shown = False  # the clock face shows the new date
             self._adopt_panel_size()
+        quiet = self.quiet
         if not self._settings_applied:
-            # the panel may have been unplugged: it then starts with its own brightness
+            # the panel may have been unplugged (own brightness, on) or switched off for the
+            # quiet time before Home Assistant restarted
             await self.client.async_command(self._ble_device(), proto.set_brightness(self.settings.brightness))
+            await self.client.async_command(self._ble_device(), proto.set_power(not quiet))
+            self._quiet_applied = quiet
             self._settings_applied = True
         self._set_available(True)
+        if quiet:
+            if not self._quiet_applied:
+                await self.client.async_command(self._ble_device(), proto.set_power(False))
+                self._quiet_applied = True
+                self._shown = None
+                self._native_clock_shown = False
+                self.async_update_listeners()
+            if self._notifications:
+                # nothing is shown at night, not even later: a queue of old messages at 6:00 helps nobody
+                _LOGGER.debug("%s: quiet time, %s notification(s) dropped", self.name, len(self._notifications))
+                self._notifications.clear()
+                self.data.notifications = 0
+                self.async_update_listeners()
+            await self._sleep(QUIET_CHECK_SECONDS)
+            return
+        if self._quiet_applied:
+            await self.client.async_command(self._ble_device(), proto.set_power(True))
+            self._quiet_applied = False
+            self._shown = None
+            self._native_clock_shown = False
+            self.async_update_listeners()
         self._evaluate_status()
         await self._refresh_calendars()
+        await self._refresh_forecasts()
 
         if self._notifications:
             await self._show_notification(self._notifications[0])
@@ -318,6 +354,13 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             return
 
         await self._show_apps()
+
+    @property
+    def quiet(self) -> bool:
+        """Inside the quiet time of the options: the panel stays dark."""
+        return schedule.in_quiet_time(
+            dt_util.now().time(), self.options.get(CONF_QUIET_FROM), self.options.get(CONF_QUIET_UNTIL)
+        )
 
     def _adopt_panel_size(self) -> None:
         info = self.client.device_info
@@ -440,6 +483,8 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         return names or [APP_CLOCK]
 
     def _app_available(self, sid: str, data: Mapping[str, Any]) -> bool:
+        if not schedule.in_window(dt_util.now().time(), data.get(A_SHOW_FROM), data.get(A_SHOW_UNTIL)):
+            return False
         kind = data.get(A_TYPE)
         if kind in (T_WEATHER, T_VALUE, T_POWER):
             return self._usable(data.get(A_ENTITY))
@@ -545,9 +590,17 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             return Screen(lines, icon=await self._icon(icon_spec, None), effect=effect)
         if kind == T_WEATHER:
             state = self.hass.states.get(data[A_ENTITY])
-            temp = state.attributes.get("temperature")
-            text = f"{self._number(temp, 0)}°" if temp is not None else state.state
-            icon = await self._icon(icon_spec, icons.WEATHER_ICONS.get(state.state, "cloud"))
+            today = self._forecast_today(data[A_ENTITY], now) if data.get(A_FORECAST) else None
+            if today is not None and today.get("temperature") is not None:
+                text = f"{self._number(today['temperature'], 0)}°"
+                if today.get("templow") is not None:
+                    text += f"/{self._number(today['templow'], 0)}°"
+                condition = today.get("condition") or state.state
+            else:
+                temp = state.attributes.get("temperature")
+                text = f"{self._number(temp, 0)}°" if temp is not None else state.state
+                condition = state.state
+            icon = await self._icon(icon_spec, icons.WEATHER_ICONS.get(condition, "cloud"))
             return Screen([Line(text, color)], icon=icon, effect=effect)
         if kind == T_VALUE:
             return await self._value_screen(data, color, effect)
@@ -673,6 +726,40 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 ev["_end"] = _event_time(ev["end"])
             self._calendar_cache[key] = (now, sorted(events, key=lambda ev: ev["_start"]))
 
+    # ---- weather forecast ---------------------------------------------------------------------
+
+    async def _refresh_forecasts(self) -> None:
+        """Daily forecast of the weather entities whose app shows today's high and low."""
+        entities = {
+            sub.data[A_ENTITY] for sub in self.apps.values()
+            if sub.data.get(A_TYPE) == T_WEATHER and sub.data.get(A_FORECAST) and sub.data.get(A_ENTITY)
+        }
+        now = dt_util.utcnow()
+        for entity_id in entities:
+            fetched, _ = self._forecasts.get(entity_id, (None, None))
+            if fetched is not None and now - fetched < FORECAST_REFRESH:
+                continue
+            try:
+                result = await self.hass.services.async_call(
+                    "weather", "get_forecasts", {"entity_id": entity_id, "type": "daily"},
+                    blocking=True, return_response=True,
+                )
+            except HomeAssistantError as err:
+                _LOGGER.warning("%s: reading the forecast of %s failed: %s", self.name, entity_id, err)
+                self._forecasts[entity_id] = (now, None)
+                continue
+            forecast = ((result or {}).get(entity_id) or {}).get("forecast") or []
+            self._forecasts[entity_id] = (now, {"days": forecast})
+
+    def _forecast_today(self, entity_id: str, now: datetime) -> dict[str, Any] | None:
+        _, cached = self._forecasts.get(entity_id, (None, None))
+        days = (cached or {}).get("days") or []
+        for day in days:
+            when = dt_util.parse_datetime(str(day.get("datetime", "")))
+            if when is not None and dt_util.as_local(when).date() == now.date():
+                return day
+        return None  # no entry for today (some providers start with tomorrow late in the day)
+
     def _next_event(self, data: Mapping[str, Any]) -> dict[str, Any] | None:
         now = dt_util.now()
         _, events = self._calendar_cache.get(self._calendar_key(data), (None, []))
@@ -765,6 +852,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
 
     async def async_set_power(self, on: bool) -> None:
         self.settings.power = on
+        self._quiet_applied = False  # the display loop switches the panel off again in the quiet time
         await self._save()
         await self._command(proto.set_power(on))
         if on:

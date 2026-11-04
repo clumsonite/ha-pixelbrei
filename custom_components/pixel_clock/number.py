@@ -1,9 +1,9 @@
-"""Number entity: how long each app is shown."""
+"""Number entities: brightness of the panel, how long each app is shown."""
 
 from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import EntityCategory, UnitOfTime
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -14,7 +14,25 @@ from .entity import PixelClockEntity
 
 async def async_setup_entry(hass: HomeAssistant, entry: PixelClockConfigEntry,
                             async_add_entities: AddConfigEntryEntitiesCallback) -> None:
-    async_add_entities([AppDurationNumber(entry.runtime_data, "app_duration")])
+    coordinator = entry.runtime_data
+    async_add_entities([BrightnessNumber(coordinator, "brightness"), AppDurationNumber(coordinator, "app_duration")])
+
+
+class BrightnessNumber(PixelClockEntity, NumberEntity):
+    """Brightness as a plain slider on the device page (the light entity hides it in its dialog)."""
+
+    _attr_mode = NumberMode.SLIDER
+    _attr_native_min_value = 1
+    _attr_native_max_value = 100
+    _attr_native_step = 1
+    _attr_native_unit_of_measurement = PERCENTAGE
+
+    @property
+    def native_value(self) -> int:
+        return self.coordinator.settings.brightness
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self.coordinator.async_set_brightness(int(value))
 
 
 class AppDurationNumber(PixelClockEntity, NumberEntity):

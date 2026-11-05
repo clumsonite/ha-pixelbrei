@@ -55,6 +55,7 @@ from .const import (
     A_UNIT,
     A_WEEKDAY_BAR,
     APP_CLOCK,
+    APP_OFF,
     APP_PREFIX,
     CALENDAR_REFRESH,
     CONF_COLOR,
@@ -199,7 +200,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self._unsub_states = None
         if self._task:
             self._task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
+            with contextlib.suppress(asyncio.CancelledError, Exception):
                 await self._task
         await self.client.async_disconnect()
 
@@ -268,8 +269,8 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._native_clock_shown = False
                 self._settings_applied = False
                 self._off_applied = False
-                await self.client.async_disconnect()
                 self._set_available(False)
+                await self.client.async_disconnect()
                 await self._sleep(delay)
             except Exception:
                 _LOGGER.exception("%s: display loop error", self.name)
@@ -320,6 +321,10 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._notifications.clear()
                 self.data.notifications = 0
                 self.async_update_listeners()
+            if self.data.current_app != APP_OFF:
+                # the sensor and the preview must not pretend that the last page is still on
+                self._schedule_preview(render.Rendered([Image.new("RGB", self.view_size)]))
+                self._publish(APP_OFF)
             await self._sleep(OFF_CHECK_SECONDS)
             return
         if self._off_applied:
@@ -510,6 +515,8 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
 
     def app_title(self, key: str | None) -> str | None:
         """Readable name of an app key for the current-app sensor."""
+        if key == APP_OFF:
+            return "Aus" if self.language == "de" else "Off"
         if key and key.startswith(APP_PREFIX) and (sub := self.apps.get(key.removeprefix(APP_PREFIX))):
             return sub.title
         return key.removeprefix("app:") if key else key

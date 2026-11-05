@@ -78,6 +78,7 @@ RETRY_SECONDS = (5, 10, 30, 60)
 
 # Built-in app names (custom apps must not use them)
 APP_CLOCK = "clock"
+APP_OFF = "off"  # shown as current app while the display loop keeps the panel dark
 APP_DATE = "date"
 APP_WEATHER = "weather"
 APP_POWER = "power"

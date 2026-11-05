@@ -16,5 +16,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/clumsonite/ha-pixelbrei/issues",
   "requirements": ["Pillow>=10.0.0"],
-  "version": "0.4.0"
+  "version": "0.4.1"
 }

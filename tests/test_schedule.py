@@ -40,22 +40,23 @@ def test_open_windows():
     assert s.in_window(time(9, 0), "08:00", "08:00")
 
 
-def test_quiet_time_needs_both_limits():
-    assert s.in_quiet_time(time(23, 0), "22:00:00", "06:00:00")
-    assert not s.in_quiet_time(time(7, 0), "22:00:00", "06:00:00")
-    assert not s.in_quiet_time(time(23, 0), "22:00:00", None)
-    assert not s.in_quiet_time(time(23, 0), None, None)
-    assert not s.in_quiet_time(time(23, 0), "22:00", "22:00")
+def test_schedule_morning_and_evening():
+    slots = [("06:00:00", "09:00:00"), (None, None), ("17:00:00", "22:00:00")]
+    assert s.in_schedule(time(6, 0), slots)
+    assert s.in_schedule(time(21, 59), slots)
+    assert not s.in_schedule(time(9, 0), slots)
+    assert not s.in_schedule(time(12, 0), slots)
+    assert not s.in_schedule(time(22, 0), slots)
 
 
-def test_outside_all_windows():
-    weather, clock = ("06:00", "08:00"), ("11:00", "14:00")
-    assert not s.outside_all_windows(time(7, 0), [weather, clock])
-    assert not s.outside_all_windows(time(12, 0), [weather, clock])
-    assert s.outside_all_windows(time(9, 0), [weather, clock])
-    assert s.outside_all_windows(time(8, 0), [weather, clock])
-    # a page without limits (or with equal start and end) is always on
-    assert not s.outside_all_windows(time(9, 0), [weather, (None, None)])
-    assert not s.outside_all_windows(time(9, 0), [weather, ("10:00", "10:00")])
-    # no enabled pages: nothing to go by, the fallback clock stays
-    assert not s.outside_all_windows(time(9, 0), [])
+def test_schedule_past_midnight():
+    assert s.in_schedule(time(1, 0), [("22:00", "02:00")])
+    assert not s.in_schedule(time(3, 0), [("22:00", "02:00")])
+
+
+def test_unused_slots_mean_always_on():
+    assert s.in_schedule(time(3, 0), [])
+    assert s.in_schedule(time(3, 0), [(None, None), ("", "")])
+    assert s.in_schedule(time(3, 0), [("08:00", "08:00")])  # same time: slot not used
+    assert s.in_schedule(time(3, 0), [("08:00", None)])  # incomplete: slot not used
+    assert not s.in_schedule(time(3, 0), [("08:00", "08:00"), ("06:00", "09:00")])

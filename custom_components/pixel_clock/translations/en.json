@@ -24,12 +24,15 @@
         "description": "Add the pages themselves under the integration with \"Add page\".",
         "data": {
           "color": "Default text colour",
-          "quiet_from": "Quiet time from",
-          "quiet_until": "Quiet time until"
+          "morning_on": "Morning on",
+          "morning_off": "Morning off",
+          "midday_on": "Midday on",
+          "midday_off": "Midday off",
+          "evening_on": "Evening on",
+          "evening_off": "Evening off"
         },
         "data_description": {
-          "quiet_from": "During the quiet time the panel is off and shows no notifications either, e.g. 22:00.",
-          "quiet_until": "End of the quiet time, e.g. 06:00. Both empty = no quiet time."
+          "morning_on": "Outside these times the display is off and shows no notifications. All empty = always on."
         }
       }
     }
@@ -102,17 +105,23 @@
       }
     },
     "time": {
-      "quiet_from": {
-        "name": "Quiet time from"
+      "morning_on": {
+        "name": "Morning on"
       },
-      "quiet_until": {
-        "name": "Quiet time until"
+      "morning_off": {
+        "name": "Morning off"
       },
-      "show_from": {
-        "name": "Page {name} from"
+      "midday_on": {
+        "name": "Midday on"
       },
-      "show_until": {
-        "name": "Page {name} until"
+      "midday_off": {
+        "name": "Midday off"
+      },
+      "evening_on": {
+        "name": "Evening on"
+      },
+      "evening_off": {
+        "name": "Evening off"
       }
     }
   },
@@ -266,9 +275,7 @@
             "done_text": "Message at the end",
             "calendars": "Calendars",
             "days": "Look ahead (days)",
-            "forecast": "Today's forecast instead of the current temperature",
-            "show_from": "Show from",
-            "show_until": "Show until"
+            "forecast": "Today's forecast instead of the current temperature"
           },
           "data_description": {
             "icon": "Built-in icon, LaMetric icon number or image file (/config/www/…).",
@@ -281,9 +288,7 @@
             "off_delay": "The page stays this long after the end (washing machine pauses).",
             "text": "Empty = page name. Templates allowed, e.g. {{ states('sensor.remaining') }} min.",
             "done_text": "Optional: notification when the status ends, e.g. \"Washing machine done!\".",
-            "forecast": "Shows today's high and low, e.g. 14°/6°, with the icon of the daily forecast.",
-            "show_from": "Optional: the page appears from this time on.",
-            "show_until": "Optional: the page disappears at this time. Past midnight works too, e.g. 22:00 to 06:00."
+            "forecast": "Shows today's high and low, e.g. 14°/6°, with the icon of the daily forecast."
           }
         }
       },

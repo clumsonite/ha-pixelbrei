@@ -1,4 +1,4 @@
-"""Time windows for pages and the quiet time (pure Python, no Home Assistant imports)."""
+"""On and off times of the panel (pure Python, no Home Assistant imports)."""
 
 from __future__ import annotations
 
@@ -49,14 +49,8 @@ def in_window(now: time, start: Any, end: Any) -> bool:
     return now >= start or now < end
 
 
-def in_quiet_time(now: time, start: Any, end: Any) -> bool:
-    """Quiet time needs both limits; an incomplete or empty setting means no quiet time."""
-    start, end = parse_time(start), parse_time(end)
-    if start is None or end is None or start == end:
-        return False
-    return in_window(now, start, end)
-
-
-def outside_all_windows(now: time, windows: list[tuple[Any, Any]]) -> bool:
-    """True if there are windows and now lies in none of them (a window without limits always counts)."""
-    return bool(windows) and not any(in_window(now, start, end) for start, end in windows)
+def in_schedule(now: time, slots: list[tuple[Any, Any]]) -> bool:
+    """True while now lies in one of the slots. A slot needs both times and start != end to count; no slot = always."""
+    used = [(start, end) for start, end in ((parse_time(a), parse_time(b)) for a, b in slots)
+            if start is not None and end is not None and start != end]
+    return not used or any(in_window(now, start, end) for start, end in used)

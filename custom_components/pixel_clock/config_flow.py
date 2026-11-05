@@ -42,8 +42,6 @@ from .const import (
     A_PROGRESS,
     A_PROGRESS_ENTITY,
     A_SECONDS,
-    A_SHOW_FROM,
-    A_SHOW_UNTIL,
     A_TEXT,
     A_TYPE,
     A_UNIT,
@@ -51,13 +49,12 @@ from .const import (
     APP_TYPES,
     CONF_COLOR,
     CONF_HEIGHT,
-    CONF_QUIET_FROM,
-    CONF_QUIET_UNTIL,
     CONF_WIDTH,
     DEFAULT_CALENDAR_DAYS,
     DOMAIN,
     ICON_AUTO,
     ICON_NONE,
+    SCHEDULE_SLOTS,
     SUBENTRY_APP,
     T_CALENDAR,
     T_CLOCK,
@@ -289,8 +286,6 @@ class AppSubentryFlow(ConfigSubentryFlow):
         fields[vol.Optional(A_COLOR, description={"suggested_value": current[A_COLOR]} if current.get(A_COLOR) else {})] = \
             selector.ColorRGBSelector()
         fields[vol.Required(A_EFFECT, default=current.get(A_EFFECT, "none"))] = EFFECT_SELECTOR
-        fields[_optional_time(A_SHOW_FROM, current)] = TIME_SELECTOR
-        fields[_optional_time(A_SHOW_UNTIL, current)] = TIME_SELECTOR
         return self.async_show_form(
             step_id="app",
             data_schema=vol.Schema(fields),
@@ -312,7 +307,6 @@ class PixelClockOptionsFlow(OptionsFlow):
             data_schema=vol.Schema({
                 vol.Optional(CONF_COLOR, description={"suggested_value": color} if color else {}):
                     selector.ColorRGBSelector(),
-                _optional_time(CONF_QUIET_FROM, options): TIME_SELECTOR,
-                _optional_time(CONF_QUIET_UNTIL, options): TIME_SELECTOR,
+                **{_optional_time(key, options): TIME_SELECTOR for slot in SCHEDULE_SLOTS for key in slot},
             }),
         )

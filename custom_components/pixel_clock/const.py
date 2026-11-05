@@ -20,6 +20,8 @@ CONF_SENSORS = "sensor_entities"
 CONF_CALENDAR_DAYS = "calendar_days"
 CONF_COLOR = "color"  # default text colour (still an option)
 CONF_DEFAULT_APPS = "default_apps"  # entry data: initial apps were created
+CONF_QUIET_FROM = "quiet_from"  # quiet time: panel off (option, "HH:MM:SS")
+CONF_QUIET_UNTIL = "quiet_until"
 
 # Apps: one config subentry of type "app" per page on the panel
 SUBENTRY_APP = "app"
@@ -51,6 +53,9 @@ A_DONE_TEXT = "done_text"
 A_PROGRESS_ENTITY = "progress_entity"
 A_CALENDARS = "calendars"
 A_DAYS = "days"
+A_FORECAST = "forecast"  # weather: today's high/low instead of the current temperature
+A_SHOW_FROM = "show_from"  # every app: shown only in this time window ("HH:MM:SS", optional)
+A_SHOW_UNTIL = "show_until"
 ICON_AUTO = "auto"
 ICON_NONE = "none"
 
@@ -68,6 +73,8 @@ DEFAULT_NOTIFY_SECONDS = 10
 DEFAULT_BRIGHTNESS = 50  # 0-100 on the panel
 
 CALENDAR_REFRESH = timedelta(minutes=5)
+FORECAST_REFRESH = timedelta(minutes=30)
+QUIET_CHECK_SECONDS = 30  # how often the loop looks at the clock during the quiet time
 TIME_SYNC_INTERVAL = timedelta(hours=1)
 RETRY_SECONDS = (5, 10, 30, 60)
 

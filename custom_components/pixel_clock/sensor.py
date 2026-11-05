@@ -48,6 +48,7 @@ class PanelSensor(PixelClockEntity, SensorEntity):
         info = self.coordinator.client.device_info
         return {
             "connected": self.coordinator.connected,
+            "quiet_time": self.coordinator.quiet,
             "fast_writes": self.coordinator.client.fast_writes,
             "mtu": self.coordinator.client.mtu,
             "device_type": info.device_type if info else None,

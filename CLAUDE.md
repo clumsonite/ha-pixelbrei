@@ -34,6 +34,12 @@ an upstream public repo (as of 1583dff, version 0.2.0); the domain stays `pixel_
 - Clock with seconds = GIF counting to the end of the minute; Rendered.valid_until keeps it from
   being re-sent within the minute (re-sending restarted the GIF and the seconds jumped).
 - App switches on the device page are user choices; don't "fix" disabled apps.
+- Day plan (0.3.0): per-app time window (show_from/show_until, `schedule.py`, pure), quiet time in
+  the entry options (panel off, notifications dropped, checked every 30 s), brightness as a number
+  entity, weather app option "forecast" (daily high/low via weather.get_forecasts, cached 30 min). Both kinds of window are also time entities (`time.py`) for dashboards; same
+  start and end means no limit, and they stay available while the panel is away.
+- Public repo: no personal data in code, docs, commits or PRs; commit as clumsonite with the
+  GitHub noreply address (set in the repo's git config).
 
 ## Ideas not done yet
 

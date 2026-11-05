@@ -11,6 +11,11 @@ def test_parse_time():
         assert s.parse_time(bad) is None
 
 
+def test_format_time_is_read_back():
+    assert s.format_time(time(6, 5)) == "06:05:00"
+    assert s.parse_time(s.format_time(time(22, 30))) == time(22, 30)
+
+
 def test_window_during_the_day():
     assert s.in_window(time(6, 0), "06:00:00", "17:00:00")
     assert s.in_window(time(16, 59), "06:00:00", "17:00:00")

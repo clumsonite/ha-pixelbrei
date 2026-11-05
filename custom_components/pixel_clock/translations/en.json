@@ -100,6 +100,20 @@
       "message": {
         "name": "Message"
       }
+    },
+    "time": {
+      "quiet_from": {
+        "name": "Quiet time from"
+      },
+      "quiet_until": {
+        "name": "Quiet time until"
+      },
+      "show_from": {
+        "name": "Page {name} from"
+      },
+      "show_until": {
+        "name": "Page {name} until"
+      }
     }
   },
   "exceptions": {

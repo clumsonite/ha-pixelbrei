@@ -52,6 +52,9 @@ the panel is off and drops notifications, e.g. 22:00–06:00. Example:
 | 17:00–22:00 | Clock and date (show from 17:00 until 22:00) |
 | 22:00–06:00 | quiet time, panel off |
 
+All of these times are also **time entities** on the device page (*Page … from/until*, *Quiet time
+from/until*), so a dashboard can change them. Setting the same time for start and end removes the limit.
+
 ### Background effects
 
 <p align="center"><img src="docs/images/effects.png" alt="Effects: rainbow, matrix, twinkle, fire, plasma, snow, rain, pulse" width="820"></p>
@@ -127,6 +130,7 @@ Apps cover most cases. For pages driven by your own automations, import a bluepr
 |---|---|
 | Light | Power and brightness |
 | Number *Brightness* | Brightness as a slider on the device page |
+| Time *Page … from/until*, *Quiet time from/until* | Start and end of a page's time window and of the quiet time |
 | Switch *Page &lt;name&gt;* | One per app: show it on this panel or not |
 | Switch *Automation page &lt;name&gt;* | One per page set by an automation (`pixel_clock.set_app`) |
 | Image *Preview* | Live picture of what the panel shows (animated while text scrolls) – put it on a dashboard with a picture entity card |

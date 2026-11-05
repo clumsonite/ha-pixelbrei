@@ -24,6 +24,11 @@ def parse_time(value: Any) -> time | None:
         return None
 
 
+def format_time(value: time) -> str:
+    """The form the time selector stores: 'HH:MM:SS'."""
+    return value.strftime("%H:%M:%S")
+
+
 def in_window(now: time, start: Any, end: Any) -> bool:
     """True while now lies in [start, end); windows may run past midnight (22:00-06:00).
 

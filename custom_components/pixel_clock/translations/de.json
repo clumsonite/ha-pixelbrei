@@ -100,6 +100,20 @@
       "message": {
         "name": "Nachricht"
       }
+    },
+    "time": {
+      "quiet_from": {
+        "name": "Ruhezeit ab"
+      },
+      "quiet_until": {
+        "name": "Ruhezeit bis"
+      },
+      "show_from": {
+        "name": "Seite {name} ab"
+      },
+      "show_until": {
+        "name": "Seite {name} bis"
+      }
     }
   },
   "exceptions": {

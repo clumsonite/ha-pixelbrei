@@ -46,3 +46,16 @@ def test_quiet_time_needs_both_limits():
     assert not s.in_quiet_time(time(23, 0), "22:00:00", None)
     assert not s.in_quiet_time(time(23, 0), None, None)
     assert not s.in_quiet_time(time(23, 0), "22:00", "22:00")
+
+
+def test_outside_all_windows():
+    weather, clock = ("06:00", "08:00"), ("11:00", "14:00")
+    assert not s.outside_all_windows(time(7, 0), [weather, clock])
+    assert not s.outside_all_windows(time(12, 0), [weather, clock])
+    assert s.outside_all_windows(time(9, 0), [weather, clock])
+    assert s.outside_all_windows(time(8, 0), [weather, clock])
+    # a page without limits (or with equal start and end) is always on
+    assert not s.outside_all_windows(time(9, 0), [weather, (None, None)])
+    assert not s.outside_all_windows(time(9, 0), [weather, ("10:00", "10:00")])
+    # no enabled pages: nothing to go by, the fallback clock stays
+    assert not s.outside_all_windows(time(9, 0), [])

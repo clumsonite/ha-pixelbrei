@@ -38,6 +38,8 @@ an upstream public repo (as of 1583dff, version 0.2.0); the domain stays `pixel_
   the entry options (panel off, notifications dropped, checked every 30 s), brightness as a number
   entity, weather app option "forecast" (daily high/low via weather.get_forecasts, cached 30 min). Both kinds of window are also time entities (`time.py`) for dashboards; same
   start and end means no limit, and they stay available while the panel is away.
+- All enabled pages outside their windows = dark like the quiet time (`outside_page_times`), no
+  fallback clock. No enabled pages at all still shows the fallback clock.
 - Public repo: no personal data in code, docs, commits or PRs; commit as clumsonite with the
   GitHub noreply address (set in the repo's git config).
 

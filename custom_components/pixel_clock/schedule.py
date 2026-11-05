@@ -55,3 +55,8 @@ def in_quiet_time(now: time, start: Any, end: Any) -> bool:
     if start is None or end is None or start == end:
         return False
     return in_window(now, start, end)
+
+
+def outside_all_windows(now: time, windows: list[tuple[Any, Any]]) -> bool:
+    """True if there are windows and now lies in none of them (a window without limits always counts)."""
+    return bool(windows) and not any(in_window(now, start, end) for start, end in windows)

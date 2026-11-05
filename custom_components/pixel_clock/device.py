@@ -23,6 +23,10 @@ INFO_TIMEOUT = 5.0
 FAST_SYNC_EVERY = 8
 FAST_ACK_TIMEOUT = 3.0  # a fast upload that is not acknowledged quickly is retried with acknowledged writes
 FAST_FAILURES_LIMIT = 2  # consecutive failures before fast uploads are switched off
+# Upper limits for a whole operation, connecting included: nothing may hold the lock for ever.
+COMMAND_TIMEOUT = 90.0
+UPLOAD_TIMEOUT = 180.0
+DISCONNECT_TIMEOUT = 25.0
 
 
 class PixelClockClient:
@@ -133,17 +137,17 @@ class PixelClockClient:
             self._info = None
 
     async def async_command(self, ble_device: BLEDevice | None, data: bytes) -> None:
-        async with self._lock:
+        async with self._lock, asyncio.timeout(COMMAND_TIMEOUT):
             await self._command(await self._ensure_connected(ble_device), data)
 
     async def async_sync_time(self, ble_device: BLEDevice | None) -> None:
-        async with self._lock:
+        async with self._lock, asyncio.timeout(COMMAND_TIMEOUT):
             client = await self._ensure_connected(ble_device)
             await self._sync_time(client, self._now())
 
     async def async_send_image(self, ble_device: BLEDevice | None, data: bytes, is_gif: bool) -> None:
         """Upload a PNG or GIF and show it (not stored on the panel)."""
-        async with self._lock:
+        async with self._lock, asyncio.timeout(UPLOAD_TIMEOUT):
             client = await self._ensure_connected(ble_device)
             windows = proto.image_windows(data, is_gif)
             if self.fast_writes:
@@ -174,7 +178,13 @@ class PixelClockClient:
         return True
 
     async def async_disconnect(self) -> None:
+        """Never raises: it runs while recovering from errors, often with the Bluetooth proxy gone."""
         async with self._lock:
-            if self._client is not None:
-                client, self._client = self._client, None
-                await client.disconnect()
+            if self._client is None:
+                return
+            client, self._client = self._client, None
+            try:
+                async with asyncio.timeout(DISCONNECT_TIMEOUT):
+                    await client.disconnect()
+            except Exception as err:  # noqa: BLE001 - the connection is given up either way
+                _LOGGER.debug("%s: disconnect failed: %s", self._name, err or type(err).__name__)

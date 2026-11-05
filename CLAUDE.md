@@ -40,6 +40,9 @@ an upstream public repo (as of 1583dff, version 0.2.0); the domain stays `pixel_
   on purpose (the user found them wrong). All pages off = dark too, notifications still show.
 - Brightness is a number entity; weather app option "forecast" (daily high/low via
   weather.get_forecasts, cached 30 min).
+- A BLE error whose recovery also failed (`client.disconnect()` timing out with the proxy gone) once
+  killed the display task for good, while the entities stayed available. `async_disconnect` must never
+  raise, and every BLE operation has an overall timeout.
 - Public repo: no personal data in code, docs, commits or PRs; commit as clumsonite with the
   GitHub noreply address (set in the repo's git config).
 

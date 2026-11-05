@@ -24,12 +24,15 @@
         "description": "Die Seiten selbst richtest du unter der Integration mit „Seite hinzufügen“ ein.",
         "data": {
           "color": "Standard-Textfarbe",
-          "quiet_from": "Ruhezeit ab",
-          "quiet_until": "Ruhezeit bis"
+          "morning_on": "Morgens ein",
+          "morning_off": "Morgens aus",
+          "midday_on": "Mittags ein",
+          "midday_off": "Mittags aus",
+          "evening_on": "Abends ein",
+          "evening_off": "Abends aus"
         },
         "data_description": {
-          "quiet_from": "In der Ruhezeit ist das Display aus und zeigt auch keine Benachrichtigungen, z. B. 22:00.",
-          "quiet_until": "Ende der Ruhezeit, z. B. 06:00. Beide Felder leer = keine Ruhezeit."
+          "morning_on": "Außerhalb dieser Zeiten ist das Display aus und zeigt auch keine Benachrichtigungen. Alle Felder leer = immer an."
         }
       }
     }
@@ -102,17 +105,23 @@
       }
     },
     "time": {
-      "quiet_from": {
-        "name": "Ruhezeit ab"
+      "morning_on": {
+        "name": "Morgens ein"
       },
-      "quiet_until": {
-        "name": "Ruhezeit bis"
+      "morning_off": {
+        "name": "Morgens aus"
       },
-      "show_from": {
-        "name": "Seite {name} ab"
+      "midday_on": {
+        "name": "Mittags ein"
       },
-      "show_until": {
-        "name": "Seite {name} bis"
+      "midday_off": {
+        "name": "Mittags aus"
+      },
+      "evening_on": {
+        "name": "Abends ein"
+      },
+      "evening_off": {
+        "name": "Abends aus"
       }
     }
   },
@@ -266,9 +275,7 @@
             "done_text": "Meldung beim Ende",
             "calendars": "Kalender",
             "days": "Vorschau (Tage)",
-            "forecast": "Tagesvorhersage statt aktueller Temperatur",
-            "show_from": "Anzeigen ab",
-            "show_until": "Anzeigen bis"
+            "forecast": "Tagesvorhersage statt aktueller Temperatur"
           },
           "data_description": {
             "icon": "Eingebautes Symbol, LaMetric-Icon-Nummer oder Bilddatei (/config/www/…).",
@@ -281,9 +288,7 @@
             "off_delay": "So lange bleibt die Seite nach dem Ende stehen (Pausen der Waschmaschine).",
             "text": "Leer = Name der Seite. Templates erlaubt, z. B. {{ states('sensor.restzeit') }} min.",
             "done_text": "Optional: Benachrichtigung, wenn der Status endet, z. B. „Waschmaschine fertig!“.",
-            "forecast": "Zeigt Höchst- und Tiefstwert von heute, z. B. 14°/6°, mit dem Symbol der Tagesvorhersage.",
-            "show_from": "Optional: Die Seite erscheint erst ab dieser Uhrzeit.",
-            "show_until": "Optional: Die Seite verschwindet ab dieser Uhrzeit. Über Mitternacht geht auch, z. B. 22:00 bis 06:00."
+            "forecast": "Zeigt Höchst- und Tiefstwert von heute, z. B. 14°/6°, mit dem Symbol der Tagesvorhersage."
           }
         }
       },

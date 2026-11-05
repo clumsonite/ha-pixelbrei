@@ -50,8 +50,6 @@ from .const import (
     A_PROGRESS,
     A_PROGRESS_ENTITY,
     A_SECONDS,
-    A_SHOW_FROM,
-    A_SHOW_UNTIL,
     A_TEXT,
     A_TYPE,
     A_UNIT,
@@ -61,8 +59,6 @@ from .const import (
     CALENDAR_REFRESH,
     CONF_COLOR,
     CONF_HEIGHT,
-    CONF_QUIET_FROM,
-    CONF_QUIET_UNTIL,
     CONF_WIDTH,
     DEFAULT_APP_SECONDS,
     DEFAULT_BRIGHTNESS,
@@ -74,8 +70,9 @@ from .const import (
     ICON_NONE,
     MODE_APPS,
     MODE_CLOCK,
-    QUIET_CHECK_SECONDS,
+    OFF_CHECK_SECONDS,
     RETRY_SECONDS,
+    SCHEDULE_SLOTS,
     SUBENTRY_APP,
     T_CALENDAR,
     T_CLOCK,
@@ -167,7 +164,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         self._shown: _Shown | None = None
         self._native_clock_shown = False
         self._settings_applied = False
-        self._quiet_applied = False  # the panel was switched off for the quiet time
+        self._off_applied = False  # the panel was switched off by the display loop
         self._forecasts: dict[str, tuple[datetime, dict[str, Any] | None]] = {}
         self._last_time_sync: datetime | None = None
         self._calendar_cache: dict[tuple[tuple[str, ...], int], tuple[datetime | None, list[dict[str, Any]]]] = {}
@@ -270,7 +267,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._shown = None
                 self._native_clock_shown = False
                 self._settings_applied = False
-                self._quiet_applied = False
+                self._off_applied = False
                 await self.client.async_disconnect()
                 self._set_available(False)
                 await self._sleep(delay)
@@ -301,19 +298,19 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self._last_time_sync = now
             self._native_clock_shown = False  # the clock face shows the new date
             self._adopt_panel_size()
-        quiet = self.quiet or self.outside_page_times
+        dark = self.scheduled_off or (self._no_pages and not self._notifications)
         if not self._settings_applied:
-            # the panel may have been unplugged (own brightness, on) or switched off for the
-            # quiet time or between page times before Home Assistant restarted
+            # the panel may have been unplugged (own brightness, on) or switched off by the
+            # display loop before Home Assistant restarted
             await self.client.async_command(self._ble_device(), proto.set_brightness(self.settings.brightness))
-            await self.client.async_command(self._ble_device(), proto.set_power(not quiet))
-            self._quiet_applied = quiet
+            await self.client.async_command(self._ble_device(), proto.set_power(not dark))
+            self._off_applied = dark
             self._settings_applied = True
         self._set_available(True)
-        if quiet:
-            if not self._quiet_applied:
+        if dark:
+            if not self._off_applied:
                 await self.client.async_command(self._ble_device(), proto.set_power(False))
-                self._quiet_applied = True
+                self._off_applied = True
                 self._shown = None
                 self._native_clock_shown = False
                 self.async_update_listeners()
@@ -323,11 +320,11 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._notifications.clear()
                 self.data.notifications = 0
                 self.async_update_listeners()
-            await self._sleep(QUIET_CHECK_SECONDS)
+            await self._sleep(OFF_CHECK_SECONDS)
             return
-        if self._quiet_applied:
+        if self._off_applied:
             await self.client.async_command(self._ble_device(), proto.set_power(True))
-            self._quiet_applied = False
+            self._off_applied = False
             self._shown = None
             self._native_clock_shown = False
             self.async_update_listeners()
@@ -356,22 +353,17 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         await self._show_apps()
 
     @property
-    def quiet(self) -> bool:
-        """Inside the quiet time of the options: the panel stays dark."""
-        return schedule.in_quiet_time(
-            dt_util.now().time(), self.options.get(CONF_QUIET_FROM), self.options.get(CONF_QUIET_UNTIL)
-        )
+    def scheduled_off(self) -> bool:
+        """Outside the on and off times of the options: the panel stays dark."""
+        slots = [(self.options.get(on), self.options.get(off)) for on, off in SCHEDULE_SLOTS]
+        return not schedule.in_schedule(dt_util.now().time(), slots)
 
     @property
-    def outside_page_times(self) -> bool:
-        """Every page is outside its time window: the panel stays dark instead of showing the fallback clock."""
-        if self.settings.mode != MODE_APPS or self._available_apps():
-            return False
-        windows = [
-            (sub.data.get(A_SHOW_FROM), sub.data.get(A_SHOW_UNTIL))
-            for sub in self.apps.values() if sub.data.get(A_ENABLED, True)
-        ]
-        return schedule.outside_all_windows(dt_util.now().time(), windows)
+    def _no_pages(self) -> bool:
+        """Every page is switched off: the panel is dark instead of showing the fallback clock."""
+        return self.settings.mode == MODE_APPS and not any(
+            sub.data.get(A_ENABLED, True) for sub in self.apps.values()
+        ) and all(name in self.settings.hidden_apps for name in self.settings.custom_apps)
 
     def _adopt_panel_size(self) -> None:
         info = self.client.device_info
@@ -497,8 +489,6 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         return names
 
     def _app_available(self, sid: str, data: Mapping[str, Any]) -> bool:
-        if not schedule.in_window(dt_util.now().time(), data.get(A_SHOW_FROM), data.get(A_SHOW_UNTIL)):
-            return False
         kind = data.get(A_TYPE)
         if kind in (T_WEATHER, T_VALUE, T_POWER):
             return self._usable(data.get(A_ENTITY))
@@ -866,7 +856,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
 
     async def async_set_power(self, on: bool) -> None:
         self.settings.power = on
-        self._quiet_applied = False  # the display loop switches the panel off again in the quiet time
+        self._off_applied = False  # the display loop switches the panel off again if it should be dark
         await self._save()
         await self._command(proto.set_power(on))
         if on:

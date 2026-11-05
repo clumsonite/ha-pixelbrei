@@ -19,8 +19,6 @@ from homeassistant.helpers.typing import ConfigType
 from . import effects
 from .const import (
     A_ENABLED,
-    A_SHOW_FROM,
-    A_SHOW_UNTIL,
     A_TYPE,
     BUILTIN_APPS,
     CONF_CALENDAR_DAYS,
@@ -192,7 +190,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PixelClockConfigEntry) -
             hass.config_entries.async_add_subentry(entry, app)
         hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_DEFAULT_APPS: True})
     _detach_from_subentries(hass, entry)
-    _remove_entities_of_deleted_apps(hass, entry)
+    _remove_stale_entities(hass, entry)
     coordinator = PixelClockCoordinator(hass, entry)
     entry.runtime_data = coordinator
     coordinator.loaded_apps = set(coordinator.apps)
@@ -218,15 +216,15 @@ def _detach_from_subentries(hass: HomeAssistant, entry: PixelClockConfigEntry) -
             devices.async_update_device(device.id, new_config_subentry_id=None)
 
 
-def _remove_entities_of_deleted_apps(hass: HomeAssistant, entry: PixelClockConfigEntry) -> None:
-    """A deleted app leaves its switch and times behind as "unavailable" in the registry: remove them."""
+def _remove_stale_entities(hass: HomeAssistant, entry: PixelClockConfigEntry) -> None:
+    """Remove what would stay "unavailable" in the registry: switches of deleted apps, times of 0.3."""
     entities = er.async_get(hass)
-    prefixes = tuple(f"{entry.unique_id}_{kind}_" for kind in ("app", A_SHOW_FROM, A_SHOW_UNTIL))
+    app = f"{entry.unique_id}_app_"
+    old = tuple(f"{entry.unique_id}_{kind}" for kind in ("show_from_", "show_until_", "quiet_from", "quiet_until"))
     for ent in er.async_entries_for_config_entry(entities, entry.entry_id):
-        for prefix in prefixes:
-            if ent.unique_id.startswith(prefix) and ent.unique_id.removeprefix(prefix) not in entry.subentries:
-                entities.async_remove(ent.entity_id)
-                break
+        deleted_app = ent.unique_id.startswith(app) and ent.unique_id.removeprefix(app) not in entry.subentries
+        if deleted_app or ent.unique_id.startswith(old):
+            entities.async_remove(ent.entity_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PixelClockConfigEntry) -> bool:

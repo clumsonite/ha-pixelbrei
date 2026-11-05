@@ -40,24 +40,22 @@ starts with clock and date.
 The page on screen follows its entity live (at most one update per second). Text that does not
 fit scrolls; a line break gives two lines.
 
-### Day plan: time windows and quiet time
+### Day plan: on and off times
 
-Every page has optional **Show from** / **Show until** times; outside its window it leaves the
-rotation (windows past midnight work too). The panel's **Configure** (⚙) sets a **quiet time**:
-the panel is off and drops notifications, e.g. 22:00–06:00. Example:
+The switches on the device page decide **which** pages rotate. The on and off times decide **when**
+the panel runs: *Morning*, *Midday* and *Evening* each have an on and an off time (time entities on
+the device page and under **Configure** ⚙), so a dashboard can change them. Outside these times the
+panel is off and drops notifications; it comes back by itself. Same on and off time means the slot
+is not used, no times at all means always on. Example:
 
-| Time | Pages |
+| Time | Panel |
 |---|---|
-| 06:00–17:00 | Weather with today's forecast (show from 06:00 until 17:00) |
-| 17:00–22:00 | Clock and date (show from 17:00 until 22:00) |
-| 22:00–06:00 | quiet time, panel off |
+| 06:00–09:00 | on, rotates through the pages that are switched on |
+| 09:00–17:00 | off |
+| 17:00–22:00 | on, rotates through the pages that are switched on |
+| 22:00–06:00 | off |
 
-If every enabled page is outside its window, the panel is off too and drops notifications, like in
-the quiet time. It comes back by itself when the next window starts. Pages without times, and pages
-set by automations, count as always on.
-
-All of these times are also **time entities** on the device page (*Page … from/until*, *Quiet time
-from/until*), so a dashboard can change them. Setting the same time for start and end removes the limit.
+With every page switched off the panel is off too, but still shows notifications.
 
 ### Background effects
 
@@ -134,7 +132,7 @@ Apps cover most cases. For pages driven by your own automations, import a bluepr
 |---|---|
 | Light | Power and brightness |
 | Number *Brightness* | Brightness as a slider on the device page |
-| Time *Page … from/until*, *Quiet time from/until* | Start and end of a page's time window and of the quiet time |
+| Time *Morning/Midday/Evening on/off* | When the panel switches on and off |
 | Switch *Page &lt;name&gt;* | One per app: show it on this panel or not |
 | Switch *Automation page &lt;name&gt;* | One per page set by an automation (`pixel_clock.set_app`) |
 | Image *Preview* | Live picture of what the panel shows (animated while text scrolls) – put it on a dashboard with a picture entity card |

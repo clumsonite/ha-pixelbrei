@@ -301,10 +301,10 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self._last_time_sync = now
             self._native_clock_shown = False  # the clock face shows the new date
             self._adopt_panel_size()
-        quiet = self.quiet
+        quiet = self.quiet or self.outside_page_times
         if not self._settings_applied:
             # the panel may have been unplugged (own brightness, on) or switched off for the
-            # quiet time before Home Assistant restarted
+            # quiet time or between page times before Home Assistant restarted
             await self.client.async_command(self._ble_device(), proto.set_brightness(self.settings.brightness))
             await self.client.async_command(self._ble_device(), proto.set_power(not quiet))
             self._quiet_applied = quiet
@@ -318,8 +318,8 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._native_clock_shown = False
                 self.async_update_listeners()
             if self._notifications:
-                # nothing is shown at night, not even later: a queue of old messages at 6:00 helps nobody
-                _LOGGER.debug("%s: quiet time, %s notification(s) dropped", self.name, len(self._notifications))
+                # nothing is shown while dark, not even later: a queue of old messages at 6:00 helps nobody
+                _LOGGER.debug("%s: panel dark, %s notification(s) dropped", self.name, len(self._notifications))
                 self._notifications.clear()
                 self.data.notifications = 0
                 self.async_update_listeners()
@@ -361,6 +361,17 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         return schedule.in_quiet_time(
             dt_util.now().time(), self.options.get(CONF_QUIET_FROM), self.options.get(CONF_QUIET_UNTIL)
         )
+
+    @property
+    def outside_page_times(self) -> bool:
+        """Every page is outside its time window: the panel stays dark instead of showing the fallback clock."""
+        if self.settings.mode != MODE_APPS or self._available_apps():
+            return False
+        windows = [
+            (sub.data.get(A_SHOW_FROM), sub.data.get(A_SHOW_UNTIL))
+            for sub in self.apps.values() if sub.data.get(A_ENABLED, True)
+        ]
+        return schedule.outside_all_windows(dt_util.now().time(), windows)
 
     def _adopt_panel_size(self) -> None:
         info = self.client.device_info
@@ -469,6 +480,9 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         return {sid: sub for sid, sub in self.config_entry.subentries.items() if sub.subentry_type == SUBENTRY_APP}
 
     def _app_names(self) -> list[str]:
+        return self._available_apps() or [APP_CLOCK]
+
+    def _available_apps(self) -> list[str]:
         names = [
             f"{APP_PREFIX}{sid}" for sid, sub in self.apps.items()
             if sub.data.get(A_ENABLED, True) and self._app_available(sid, sub.data)
@@ -480,7 +494,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 continue
             if name not in self.settings.hidden_apps:
                 names.append(f"app:{name}")
-        return names or [APP_CLOCK]
+        return names
 
     def _app_available(self, sid: str, data: Mapping[str, Any]) -> bool:
         if not schedule.in_window(dt_util.now().time(), data.get(A_SHOW_FROM), data.get(A_SHOW_UNTIL)):

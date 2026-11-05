@@ -52,6 +52,10 @@ the panel is off and drops notifications, e.g. 22:00–06:00. Example:
 | 17:00–22:00 | Clock and date (show from 17:00 until 22:00) |
 | 22:00–06:00 | quiet time, panel off |
 
+If every enabled page is outside its window, the panel is off too and drops notifications, like in
+the quiet time. It comes back by itself when the next window starts. Pages without times, and pages
+set by automations, count as always on.
+
 All of these times are also **time entities** on the device page (*Page … from/until*, *Quiet time
 from/until*), so a dashboard can change them. Setting the same time for start and end removes the limit.
 

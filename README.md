@@ -40,6 +40,11 @@ starts with clock and date.
 The page on screen follows its entity live (at most one update per second). Text that does not
 fit scrolls; a line break gives two lines.
 
+### Page changes
+
+When the rotation moves to another page, the panel dims, the new page is sent and the panel brightens
+again. Notifications appear right away, and updates of the page on screen do not fade.
+
 ### Switching on and off by time
 
 The integration has no timetable of its own. The switches on the device page decide **which** pages

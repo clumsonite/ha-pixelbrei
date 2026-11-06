@@ -274,6 +274,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             except Exception:
                 _LOGGER.exception("%s: display loop error", self.name)
                 self._shown = None
+                self._settings_applied = False  # a page change may have stopped halfway through its fade
                 await self._sleep(30)
 
     async def _sleep(self, seconds: float) -> None:
@@ -435,12 +436,33 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         rendered, data, is_gif, digest = await self.hass.async_add_executor_job(self._render, what)
         if self._shown is not None and self._shown.key == key and self._shown.digest == digest:
             return rendered
+        # only between pages: a notification comes right away, a live update stays on the same page
+        fade = self._shown is not None and self._shown.key != key and not key.startswith("notify:")
+        started = time.monotonic()
+        if fade:
+            await self._fade_out()
         await self.client.async_send_image(self._ble_device(), data, is_gif)
+        if fade:
+            await self._fade_in()
+            _LOGGER.debug("%s: page change with fade took %.2f s", self.name, time.monotonic() - started)
         self._last_upload = time.monotonic()
         self._shown = _Shown(key, digest, rendered.cycle_ms, rendered.valid_until)
         self._native_clock_shown = False
         self._schedule_preview(rendered)
         return rendered
+
+    async def _fade_out(self) -> None:
+        for level in proto.fade_levels(self.settings.brightness):
+            await self.client.async_command(self._ble_device(), proto.set_brightness(level))
+
+    async def _fade_in(self) -> None:
+        for level in [*proto.fade_levels(self.settings.brightness)[-2::-1], None]:
+            if not self.settings.power:
+                self._settings_applied = False  # switched off meanwhile: the brightness is set when it comes back
+                return
+            # None: the last step reads the setting again, it may have changed during the fade
+            value = self.settings.brightness if level is None else level
+            await self.client.async_command(self._ble_device(), proto.set_brightness(value))
 
     def _schedule_preview(self, rendered: render.Rendered) -> None:
         """Build the preview in the background, so it never delays the panel or the state."""

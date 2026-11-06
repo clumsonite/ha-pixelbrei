@@ -38,6 +38,9 @@ an upstream public repo (as of 1583dff, version 0.2.0); the domain stays `pixel_
   panel slots; the user prefers them in Node-RED). The light entity is the plain master switch. Power off
   or all pages off = dark: current app "off", black preview, notifications dropped (all pages off keeps new
   notifications showing).
+- Page changes fade with brightness commands (`_send`, `protocol.fade_levels`), not with GIF frames: a GIF
+  loops as a whole, so a transition in it would replay on effects, scrolling text and the clock. A fade cut
+  short leaves the panel dim, so `_settings_applied = False` makes the display loop set the brightness again.
 - Brightness is a number entity; weather app option "forecast" (daily high/low via
   weather.get_forecasts, cached 30 min).
 - A BLE error whose recovery also failed (`client.disconnect()` timing out with the proxy gone) once

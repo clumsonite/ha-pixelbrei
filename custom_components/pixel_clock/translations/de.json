@@ -69,6 +69,22 @@
           "portrait_right": "Hochkant (rechtes Ende oben)",
           "upside_down": "Quer, auf dem Kopf"
         }
+      },
+      "transition": {
+        "name": "Übergang",
+        "state": {
+          "none": "Kein Übergang",
+          "slide_left": "Nach links schieben",
+          "slide_right": "Nach rechts schieben",
+          "slide_up": "Nach oben schieben",
+          "slide_down": "Nach unten schieben",
+          "wipe": "Wischen",
+          "curtain": "Vorhang",
+          "blinds": "Jalousie",
+          "dissolve": "Auflösen",
+          "fade": "Ausblenden",
+          "random": "Zufällig"
+        }
       }
     },
     "sensor": {

@@ -67,11 +67,6 @@ def set_brightness(level: int) -> bytes:
     return _frame(0x04, 0x80, bytes([max(0, min(100, int(level)))]))
 
 
-def fade_levels(level: int, steps: int = 4) -> list[int]:
-    """Brightness levels from just below level down to 1, the dimmest level that still shows the picture."""
-    return sorted({max(1, round(level * i / steps)) for i in range(steps)} - {level}, reverse=True)
-
-
 def set_time(now: datetime) -> bytes:
     """Set the clock; the panel answers with its device info (same command)."""
     return _frame(0x01, 0x80, bytes([now.hour, now.minute, now.second, 0]))

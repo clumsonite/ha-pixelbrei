@@ -42,8 +42,9 @@ fit scrolls; a line break gives two lines.
 
 ### Page changes
 
-When the rotation moves to another page, the panel dims, the new page is sent and the panel brightens
-again. Notifications appear right away, and updates of the page on screen do not fade.
+The select *Transition* sets how the rotation moves to another page: slide (four directions), wipe,
+curtain, blinds, dissolve, fade, random or none. A transition is sent as a short GIF, followed by the page
+itself, so a page change uploads twice. Notifications appear right away.
 
 ### Switching on and off by time
 
@@ -134,6 +135,7 @@ Apps cover most cases. For pages driven by your own automations, import a bluepr
 | Image *Preview* | Live picture of what the panel shows (animated while text scrolls) – put it on a dashboard with a picture entity card |
 | Select *Mode* | *Apps* (rotation rendered by Home Assistant) or *Built-in clock* (the panel's own clock face) |
 | Select *Orientation* | Landscape, portrait (left or right end on top), upside down |
+| Select *Transition* | How the rotation changes pages |
 | Select *Built-in clock face* | Clock face 0–8 for the built-in clock |
 | Switch *Rotate apps* | Off: stays on the current page |
 | Number *App duration* | Seconds per page (scrolling text gets at least one full pass) |

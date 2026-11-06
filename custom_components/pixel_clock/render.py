@@ -380,6 +380,18 @@ def view_size(width: int, height: int, orientation: str) -> tuple[int, int]:
     return (height, width) if ORIENTATIONS.get(orientation, 0) in (90, 270) else (width, height)
 
 
+def frame_at(rendered: Rendered, elapsed_ms: float) -> Image.Image:
+    """The frame on the panel elapsed_ms after the upload (animations loop)."""
+    if not rendered.animated:
+        return rendered.frames[0]
+    left = elapsed_ms % rendered.cycle_ms
+    for frame, duration in zip(rendered.frames, rendered.durations, strict=True):
+        if left < duration:
+            return frame
+        left -= duration
+    return rendered.frames[-1]
+
+
 def to_panel(rendered: Rendered, orientation: str) -> Rendered:
     angle = ORIENTATIONS.get(orientation, 0)
     if not angle:

@@ -69,6 +69,22 @@
           "portrait_right": "Portrait (right end on top)",
           "upside_down": "Landscape, upside down"
         }
+      },
+      "transition": {
+        "name": "Transition",
+        "state": {
+          "none": "No transition",
+          "slide_left": "Slide left",
+          "slide_right": "Slide right",
+          "slide_up": "Slide up",
+          "slide_down": "Slide down",
+          "wipe": "Wipe",
+          "curtain": "Curtain",
+          "blinds": "Blinds",
+          "dissolve": "Dissolve",
+          "fade": "Fade",
+          "random": "Random"
+        }
       }
     },
     "sensor": {

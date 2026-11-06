@@ -8,13 +8,6 @@ from pixel_clock import protocol as p
 NOW = datetime(2026, 11, 1, 14, 37, 5)  # Sunday
 
 
-def test_fade_levels_go_down_to_the_dimmest_level():
-    assert p.fade_levels(54) == [40, 27, 14, 1]
-    assert p.fade_levels(100) == [75, 50, 25, 1]
-    assert p.fade_levels(2) == [1]
-    assert p.fade_levels(1) == []
-
-
 def test_simple_commands():
     assert p.set_power(True) == bytes.fromhex("0500070101")
     assert p.set_power(False) == bytes.fromhex("0500070100")

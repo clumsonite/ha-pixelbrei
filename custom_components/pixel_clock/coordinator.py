@@ -28,7 +28,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 from PIL import Image
 
-from . import icons, render
+from . import icons, render, transitions
 from . import protocol as proto
 from .const import (
     A_ABOVE,
@@ -124,6 +124,7 @@ class _Shown:
     key: str
     digest: str
     cycle_ms: int
+    rendered: render.Rendered
     valid_until: datetime | None = None
 
 
@@ -135,6 +136,7 @@ class _Settings:
     clock_style: int = 1
     orientation: str = "landscape"
     auto_rotate: bool = True
+    transition: str = transitions.NONE
     app_seconds: int = DEFAULT_APP_SECONDS
     custom_apps: dict[str, dict[str, Any]] = field(default_factory=dict)
     # every custom page ever set (one switch each on the device page) and the ones switched off
@@ -274,7 +276,6 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             except Exception:
                 _LOGGER.exception("%s: display loop error", self.name)
                 self._shown = None
-                self._settings_applied = False  # a page change may have stopped halfway through its fade
                 await self._sleep(30)
 
     async def _sleep(self, seconds: float) -> None:
@@ -415,7 +416,12 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             # would restart the GIF and make the seconds jump
             scroll_ms = 0
         else:
-            rendered = await self._send(current, await self._build(current))
+            what = await self._build(current)
+            if not isinstance(what, render.Rendered):
+                what = await self.hass.async_add_executor_job(render.render_screen, what, *self.view_size)
+            if await self._play_transition(current, what) and what.valid_until:
+                what = await self._build(current)  # the clock's seconds went on during the transition
+            rendered = await self._send(current, what)
             scroll_ms = rendered.scroll_ms
         if self._app_until == 0:
             # counted from the end of the upload, which can take seconds for scrolling text
@@ -436,33 +442,32 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         rendered, data, is_gif, digest = await self.hass.async_add_executor_job(self._render, what)
         if self._shown is not None and self._shown.key == key and self._shown.digest == digest:
             return rendered
-        # only between pages: a notification comes right away, a live update stays on the same page
-        fade = self._shown is not None and self._shown.key != key and not key.startswith("notify:")
-        started = time.monotonic()
-        if fade:
-            await self._fade_out()
         await self.client.async_send_image(self._ble_device(), data, is_gif)
-        if fade:
-            await self._fade_in()
-            _LOGGER.debug("%s: page change with fade took %.2f s", self.name, time.monotonic() - started)
         self._last_upload = time.monotonic()
-        self._shown = _Shown(key, digest, rendered.cycle_ms, rendered.valid_until)
+        self._shown = _Shown(key, digest, rendered.cycle_ms, rendered, rendered.valid_until)
         self._native_clock_shown = False
         self._schedule_preview(rendered)
         return rendered
 
-    async def _fade_out(self) -> None:
-        for level in proto.fade_levels(self.settings.brightness):
-            await self.client.async_command(self._ble_device(), proto.set_brightness(level))
+    async def _play_transition(self, key: str, new: render.Rendered) -> bool:
+        """From the page on the panel to the new one; True when a transition was played."""
+        shown = self._shown
+        kind = transitions.pick(self.settings.transition)
+        if kind is None or shown is None or shown.key == key:
+            return False  # a notification or the first picture comes right away
+        elapsed_ms = (time.monotonic() - self._last_upload) * 1000
 
-    async def _fade_in(self) -> None:
-        for level in [*proto.fade_levels(self.settings.brightness)[-2::-1], None]:
-            if not self.settings.power:
-                self._settings_applied = False  # switched off meanwhile: the brightness is set when it comes back
-                return
-            # None: the last step reads the setting again, it may have changed during the fade
-            value = self.settings.brightness if level is None else level
-            await self.client.async_command(self._ble_device(), proto.set_brightness(value))
+        def build() -> tuple[render.Rendered, bytes, bool]:
+            rendered = transitions.build(kind, render.frame_at(shown.rendered, elapsed_ms), new.frames[0])
+            return rendered, *render.encode(render.to_panel(rendered, self.settings.orientation))
+
+        started = time.monotonic()
+        rendered, data, is_gif = await self.hass.async_add_executor_job(build)
+        await self.client.async_send_image(self._ble_device(), data, is_gif)
+        _LOGGER.debug("%s: transition %s, %s bytes, sent in %.2f s", self.name, kind, len(data),
+                      time.monotonic() - started)
+        await asyncio.sleep(transitions.seconds(rendered))
+        return True
 
     def _schedule_preview(self, rendered: render.Rendered) -> None:
         """Build the preview in the background, so it never delays the panel or the state."""

@@ -54,7 +54,6 @@ PLATFORMS = [
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.TEXT,
-    Platform.TIME,
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -217,10 +216,13 @@ def _detach_from_subentries(hass: HomeAssistant, entry: PixelClockConfigEntry) -
 
 
 def _remove_stale_entities(hass: HomeAssistant, entry: PixelClockConfigEntry) -> None:
-    """Remove what would stay "unavailable" in the registry: switches of deleted apps, times of 0.3."""
+    """Remove what would stay "unavailable" in the registry: switches of deleted apps, times of 0.3 and 0.4."""
     entities = er.async_get(hass)
     app = f"{entry.unique_id}_app_"
-    old = tuple(f"{entry.unique_id}_{kind}" for kind in ("show_from_", "show_until_", "quiet_from", "quiet_until"))
+    old = tuple(f"{entry.unique_id}_{kind}" for kind in (
+        "show_from_", "show_until_", "quiet_from", "quiet_until",
+        "morning_on", "morning_off", "midday_on", "midday_off", "evening_on", "evening_off",
+    ))
     for ent in er.async_entries_for_config_entry(entities, entry.entry_id):
         deleted_app = ent.unique_id.startswith(app) and ent.unique_id.removeprefix(app) not in entry.subentries
         if deleted_app or ent.unique_id.startswith(old):

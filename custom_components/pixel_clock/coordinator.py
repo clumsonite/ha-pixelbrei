@@ -28,7 +28,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 from PIL import Image
 
-from . import icons, render, schedule
+from . import icons, render
 from . import protocol as proto
 from .const import (
     A_ABOVE,
@@ -73,7 +73,6 @@ from .const import (
     MODE_CLOCK,
     OFF_CHECK_SECONDS,
     RETRY_SECONDS,
-    SCHEDULE_SLOTS,
     SUBENTRY_APP,
     T_CALENDAR,
     T_CLOCK,
@@ -290,6 +289,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
 
     async def _step(self) -> None:
         if not self.settings.power:
+            self._show_off()
             await self._sleep(3600)
             return
 
@@ -299,7 +299,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self._last_time_sync = now
             self._native_clock_shown = False  # the clock face shows the new date
             self._adopt_panel_size()
-        dark = self.scheduled_off or (self._no_pages and not self._notifications)
+        dark = self._no_pages and not self._notifications
         if not self._settings_applied:
             # the panel may have been unplugged (own brightness, on) or switched off by the
             # display loop before Home Assistant restarted
@@ -315,16 +315,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
                 self._shown = None
                 self._native_clock_shown = False
                 self.async_update_listeners()
-            if self._notifications:
-                # nothing is shown while dark, not even later: a queue of old messages at 6:00 helps nobody
-                _LOGGER.debug("%s: panel dark, %s notification(s) dropped", self.name, len(self._notifications))
-                self._notifications.clear()
-                self.data.notifications = 0
-                self.async_update_listeners()
-            if self.data.current_app != APP_OFF:
-                # the sensor and the preview must not pretend that the last page is still on
-                self._schedule_preview(render.Rendered([Image.new("RGB", self.view_size)]))
-                self._publish(APP_OFF)
+            self._show_off()
             await self._sleep(OFF_CHECK_SECONDS)
             return
         if self._off_applied:
@@ -357,11 +348,18 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
 
         await self._show_apps()
 
-    @property
-    def scheduled_off(self) -> bool:
-        """Outside the on and off times of the options: the panel stays dark."""
-        slots = [(self.options.get(on), self.options.get(off)) for on, off in SCHEDULE_SLOTS]
-        return not schedule.in_schedule(dt_util.now().time(), slots)
+    def _show_off(self) -> None:
+        """The panel is dark: tell the sensor and the preview, and forget what was waiting to be shown."""
+        if self._notifications:
+            # not even later: a queue of old messages in the morning helps nobody
+            _LOGGER.debug("%s: panel dark, %s notification(s) dropped", self.name, len(self._notifications))
+            self._notifications.clear()
+            self.data.notifications = 0
+            self.async_update_listeners()
+        if self.data.current_app != APP_OFF:
+            # the sensor and the preview must not pretend that the last page is still on
+            self._schedule_preview(render.Rendered([Image.new("RGB", self.view_size)]))
+            self._publish(APP_OFF)
 
     @property
     def _no_pages(self) -> bool:

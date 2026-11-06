@@ -20,8 +20,6 @@ CONF_SENSORS = "sensor_entities"
 CONF_CALENDAR_DAYS = "calendar_days"
 CONF_COLOR = "color"  # default text colour (still an option)
 CONF_DEFAULT_APPS = "default_apps"  # entry data: initial apps were created
-# on and off times of the panel (options, "HH:MM:SS"); outside of them it is dark, no times = always on
-SCHEDULE_SLOTS = (("morning_on", "morning_off"), ("midday_on", "midday_off"), ("evening_on", "evening_off"))
 
 # Apps: one config subentry of type "app" per page on the panel
 SUBENTRY_APP = "app"
@@ -72,7 +70,7 @@ DEFAULT_BRIGHTNESS = 50  # 0-100 on the panel
 
 CALENDAR_REFRESH = timedelta(minutes=5)
 FORECAST_REFRESH = timedelta(minutes=30)
-OFF_CHECK_SECONDS = 30  # how often the loop looks at the clock while the panel is dark
+OFF_CHECK_SECONDS = 30  # how often the loop looks again while every page is off
 TIME_SYNC_INTERVAL = timedelta(hours=1)
 RETRY_SECONDS = (5, 10, 30, 60)
 

@@ -18,7 +18,7 @@ FRAME_MS = 80
 RGB = tuple[int, int, int]
 
 # "rainbow" colours the text instead of drawing a background
-EFFECTS = ("none", "rainbow", "matrix", "twinkle", "fire", "plasma", "snow", "rain", "pulse")
+EFFECTS = ("none", "rainbow", "matrix", "twinkle", "fire", "plasma", "snow", "rain", "pulse", "hearts")
 TEXT_EFFECTS = ("rainbow",)
 
 
@@ -124,6 +124,28 @@ def _pulse(img, t, w, h, color: RGB = (0, 120, 255)):
     img.paste(c, (0, 0, w, h))
 
 
+HEART = ((1, 0), (3, 0), (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (0, 2), (1, 2), (2, 2), (3, 2), (4, 2),
+         (1, 3), (2, 3), (3, 3), (2, 4))
+HEART_W, HEART_H = 5, 5
+
+
+def _hearts(img, t, w, h):
+    """Small red hearts spread over the picture, each beating in its own rhythm."""
+    px = img.load()
+    rng = _rng(5)
+    gap_x, gap_y = 9, 7
+    for row, top in enumerate(range(1, h - HEART_H + 1, gap_y)):
+        for left in range(row % 2 * gap_x // 2, w - HEART_W + 1, gap_x):  # every other row shifted
+            x0 = left + rng.randrange(3)
+            y0 = top + rng.randrange(2)
+            phase = rng.random()
+            level = 0.6 + 0.4 * math.sin(2 * math.pi * (t / FRAMES + phase))
+            color = (_q(200 * level, 8), 0, _q(16 * level, 8))
+            for dx, dy in HEART:
+                if x0 + dx < w and y0 + dy < h:
+                    px[x0 + dx, y0 + dy] = color
+
+
 _BACKGROUNDS = {
     "matrix": _matrix,
     "twinkle": _twinkle,
@@ -132,6 +154,7 @@ _BACKGROUNDS = {
     "snow": _snow,
     "rain": _rain,
     "pulse": _pulse,
+    "hearts": _hearts,
 }
 
 

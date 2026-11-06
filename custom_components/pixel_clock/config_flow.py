@@ -54,7 +54,6 @@ from .const import (
     DOMAIN,
     ICON_AUTO,
     ICON_NONE,
-    SCHEDULE_SLOTS,
     SUBENTRY_APP,
     T_CALENDAR,
     T_CLOCK,
@@ -176,12 +175,7 @@ TYPE_SELECTOR = selector.SelectSelector(selector.SelectSelectorConfig(
 ))
 STATES_SELECTOR = selector.TextSelector(selector.TextSelectorConfig(multiple=True))
 TEXT_SELECTOR = selector.TextSelector(selector.TextSelectorConfig(multiline=False))
-TIME_SELECTOR = selector.TimeSelector()
 
-
-def _optional_time(key: str, values: Mapping[str, Any]) -> vol.Optional:
-    """Optional time field that can be emptied again (suggested value instead of a default)."""
-    return vol.Optional(key, description={"suggested_value": values[key]} if values.get(key) else {})
 
 # default page names per type (the subentry title, editable)
 DEFAULT_TITLES = {
@@ -307,6 +301,5 @@ class PixelClockOptionsFlow(OptionsFlow):
             data_schema=vol.Schema({
                 vol.Optional(CONF_COLOR, description={"suggested_value": color} if color else {}):
                     selector.ColorRGBSelector(),
-                **{_optional_time(key, options): TIME_SELECTOR for slot in SCHEDULE_SLOTS for key in slot},
             }),
         )

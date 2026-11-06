@@ -57,6 +57,10 @@ is not used, no times at all means always on. Example:
 
 With every page switched off the panel is off too, but still shows notifications.
 
+The light entity is the manual switch, and a manual change lasts until the next on or off time:
+switched off by hand, the panel comes back at the next on time; switched on during an off time, it
+stays on until the on/off times change over.
+
 ### Background effects
 
 <p align="center"><img src="docs/images/effects.png" alt="Effects: rainbow, matrix, twinkle, fire, plasma, snow, rain, pulse" width="820"></p>

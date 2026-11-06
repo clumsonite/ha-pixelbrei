@@ -141,6 +141,9 @@ class _Settings:
     # every custom page ever set (one switch each on the device page) and the ones switched off
     known_apps: list[str] = field(default_factory=list)
     hidden_apps: list[str] = field(default_factory=list)
+    # the on/off times: last state seen, and "switched on by hand although it should be dark"
+    in_plan: bool | None = None
+    manual_on: bool = False
 
 
 class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
@@ -289,8 +292,9 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self.async_update_listeners()
 
     async def _step(self) -> None:
+        await self._follow_plan()
         if not self.settings.power:
-            await self._sleep(3600)
+            await self._sleep(OFF_CHECK_SECONDS)  # the next on time switches it on again
             return
 
         now = dt_util.now()
@@ -299,7 +303,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
             self._last_time_sync = now
             self._native_clock_shown = False  # the clock face shows the new date
             self._adopt_panel_size()
-        dark = self.scheduled_off or (self._no_pages and not self._notifications)
+        dark = self.dark_by_schedule or (self._no_pages and not self._notifications)
         if not self._settings_applied:
             # the panel may have been unplugged (own brightness, on) or switched off by the
             # display loop before Home Assistant restarted
@@ -362,6 +366,30 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
         """Outside the on and off times of the options: the panel stays dark."""
         slots = [(self.options.get(on), self.options.get(off)) for on, off in SCHEDULE_SLOTS]
         return not schedule.in_schedule(dt_util.now().time(), slots)
+
+    @property
+    def dark_by_schedule(self) -> bool:
+        return self.scheduled_off and not self.settings.manual_on
+
+    @property
+    def is_on(self) -> bool:
+        """What the panel should look like because of the switch and the on/off times."""
+        return self.settings.power and not self.dark_by_schedule
+
+    async def _follow_plan(self) -> None:
+        """A manual change lasts until the next on or off time; only then the plan takes over again."""
+        in_plan = not self.scheduled_off
+        was = self.settings.in_plan
+        if was == in_plan:
+            return
+        self.settings.in_plan = in_plan
+        if was is not None:
+            power, self.settings.manual_on = schedule.after_plan_change(in_plan, self.settings.power)
+            if power and not self.settings.power:
+                self._off_applied = True  # switched off by hand: the loop switches it on again
+            self.settings.power = power
+        await self._save()
+        self.async_update_listeners()
 
     @property
     def _no_pages(self) -> bool:
@@ -863,6 +891,7 @@ class PixelClockCoordinator(DataUpdateCoordinator[DisplayState]):
 
     async def async_set_power(self, on: bool) -> None:
         self.settings.power = on
+        self.settings.manual_on = on and self.scheduled_off
         self._off_applied = False  # the display loop switches the panel off again if it should be dark
         await self._save()
         await self._command(proto.set_power(on))

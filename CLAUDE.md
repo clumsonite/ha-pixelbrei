@@ -38,6 +38,8 @@ an upstream public repo (as of 1583dff, version 0.2.0); the domain stays `pixel_
   midday, evening; options + time entities, `schedule.py`, pure). Outside the slots the panel is dark
   and notifications are dropped, checked every 30 s. Per-page windows and the quiet time of 0.3 are gone
   on purpose (the user found them wrong). All pages off = dark too, notifications still show.
+  The light entity is a manual override until the next on/off change (`_follow_plan`); a permanent
+  master off made the panel miss its on time.
 - Brightness is a number entity; weather app option "forecast" (daily high/low via
   weather.get_forecasts, cached 30 min).
 - A BLE error whose recovery also failed (`client.disconnect()` timing out with the proxy gone) once

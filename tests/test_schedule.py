@@ -60,3 +60,12 @@ def test_unused_slots_mean_always_on():
     assert s.in_schedule(time(3, 0), [("08:00", "08:00")])  # same time: slot not used
     assert s.in_schedule(time(3, 0), [("08:00", None)])  # incomplete: slot not used
     assert not s.in_schedule(time(3, 0), [("08:00", "08:00"), ("06:00", "09:00")])
+
+
+def test_plan_change_ends_manual_changes():
+    # on time starts: on again, even if it was switched off by hand during the night
+    assert s.after_plan_change(True, False) == (True, False)
+    assert s.after_plan_change(True, True) == (True, False)
+    # off time starts: switched on by hand ends; switched off by hand stays until the next on time
+    assert s.after_plan_change(False, True) == (True, False)
+    assert s.after_plan_change(False, False) == (False, False)

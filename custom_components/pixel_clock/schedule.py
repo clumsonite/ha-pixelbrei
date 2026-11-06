@@ -54,3 +54,8 @@ def in_schedule(now: time, slots: list[tuple[Any, Any]]) -> bool:
     used = [(start, end) for start, end in ((parse_time(a), parse_time(b)) for a, b in slots)
             if start is not None and end is not None and start != end]
     return not used or any(in_window(now, start, end) for start, end in used)
+
+
+def after_plan_change(in_plan: bool, power: bool) -> tuple[bool, bool]:
+    """(power, manual_on) when the on/off times change over: manual changes last only until then."""
+    return (True if in_plan else power), False

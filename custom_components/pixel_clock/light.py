@@ -24,7 +24,7 @@ class PixelClockLight(PixelClockEntity, LightEntity):
 
     @property
     def is_on(self) -> bool:
-        return self.coordinator.settings.power
+        return self.coordinator.is_on
 
     @property
     def brightness(self) -> int:
@@ -33,7 +33,7 @@ class PixelClockLight(PixelClockEntity, LightEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         if ATTR_BRIGHTNESS in kwargs:
             await self.coordinator.async_set_brightness(max(1, round(kwargs[ATTR_BRIGHTNESS] * 100 / 255)))
-        if not self.coordinator.settings.power:
+        if not self.coordinator.is_on:
             await self.coordinator.async_set_power(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:

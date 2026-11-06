@@ -23,16 +23,7 @@
         "title": "Panel settings",
         "description": "Add the pages themselves under the integration with \"Add page\".",
         "data": {
-          "color": "Default text colour",
-          "morning_on": "Morning on",
-          "morning_off": "Morning off",
-          "midday_on": "Midday on",
-          "midday_off": "Midday off",
-          "evening_on": "Evening on",
-          "evening_off": "Evening off"
-        },
-        "data_description": {
-          "morning_on": "Outside these times the display is off and shows no notifications. All empty = always on."
+          "color": "Default text colour"
         }
       }
     }
@@ -102,26 +93,6 @@
     "text": {
       "message": {
         "name": "Message"
-      }
-    },
-    "time": {
-      "morning_on": {
-        "name": "Morning on"
-      },
-      "morning_off": {
-        "name": "Morning off"
-      },
-      "midday_on": {
-        "name": "Midday on"
-      },
-      "midday_off": {
-        "name": "Midday off"
-      },
-      "evening_on": {
-        "name": "Evening on"
-      },
-      "evening_off": {
-        "name": "Evening off"
       }
     }
   },
@@ -320,7 +291,8 @@
         "plasma": "Plasma",
         "snow": "Snow",
         "rain": "Rain",
-        "pulse": "Pulse"
+        "pulse": "Pulse",
+        "hearts": "Hearts"
       }
     },
     "icon": {

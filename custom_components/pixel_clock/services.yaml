@@ -35,7 +35,7 @@ notify:
       selector:
         select:
           translation_key: effect
-          options: [none, rainbow, matrix, twinkle, fire, plasma, snow, rain, pulse]
+          options: [none, rainbow, matrix, twinkle, fire, plasma, snow, rain, pulse, hearts]
 
 set_app:
   fields:

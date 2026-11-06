@@ -40,28 +40,20 @@ starts with clock and date.
 The page on screen follows its entity live (at most one update per second). Text that does not
 fit scrolls; a line break gives two lines.
 
-### Day plan: on and off times
+### Switching on and off by time
 
-The switches on the device page decide **which** pages rotate. The on and off times decide **when**
-the panel runs: *Morning*, *Midday* and *Evening* each have an on and an off time (time entities on
-the device page and under **Configure** ⚙), so a dashboard can change them. Outside these times the
-panel is off and drops notifications; it comes back by itself. Same on and off time means the slot
-is not used, no times at all means always on. Example:
-
-| Time | Panel |
-|---|---|
-| 06:00–09:00 | on, rotates through the pages that are switched on |
-| 09:00–17:00 | off |
-| 17:00–22:00 | on, rotates through the pages that are switched on |
-| 22:00–06:00 | off |
+The integration has no timetable of its own. The switches on the device page decide **which** pages
+rotate; to run the panel only at certain times, switch its light entity with an automation (Home
+Assistant, Node-RED, ...). While it is off the preview is black, the current app reads *Off* and
+notifications are dropped.
 
 With every page switched off the panel is off too, but still shows notifications.
 
 ### Background effects
 
-<p align="center"><img src="docs/images/effects.png" alt="Effects: rainbow, matrix, twinkle, fire, plasma, snow, rain, pulse" width="820"></p>
+<p align="center"><img src="docs/images/effects.png" alt="Effects: rainbow, matrix, twinkle, fire, plasma, snow, rain, pulse, hearts" width="820"></p>
 
-Rainbow text, matrix, twinkling stars, fire, plasma, snow, rain and pulse – seamless loops, kept
+Rainbow text, matrix, twinkling stars, fire, plasma, snow, rain, pulse and red hearts – seamless loops, kept
 dim behind text and icon:
 
 <p align="center"><img src="docs/images/effect_snow.gif" alt="Snow effect" width="660"></p>
@@ -132,7 +124,6 @@ Apps cover most cases. For pages driven by your own automations, import a bluepr
 |---|---|
 | Light | Power and brightness |
 | Number *Brightness* | Brightness as a slider on the device page |
-| Time *Morning/Midday/Evening on/off* | When the panel switches on and off |
 | Switch *Page &lt;name&gt;* | One per app: show it on this panel or not |
 | Switch *Automation page &lt;name&gt;* | One per page set by an automation (`pixel_clock.set_app`) |
 | Image *Preview* | Live picture of what the panel shows (animated while text scrolls) – put it on a dashboard with a picture entity card |

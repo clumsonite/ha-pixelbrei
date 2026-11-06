@@ -34,10 +34,10 @@ an upstream public repo (as of 1583dff, version 0.2.0); the domain stays `pixel_
 - Clock with seconds = GIF counting to the end of the minute; Rendered.valid_until keeps it from
   being re-sent within the minute (re-sending restarted the GIF and the seconds jumped).
 - App switches on the device page are user choices; don't "fix" disabled apps.
-- Day plan (0.4.0): page switches decide what rotates, panel-wide on/off slots decide when (morning,
-  midday, evening; options + time entities, `schedule.py`, pure). Outside the slots the panel is dark
-  and notifications are dropped, checked every 30 s. Per-page windows and the quiet time of 0.3 are gone
-  on purpose (the user found them wrong). All pages off = dark too, notifications still show.
+- On/off times are not part of the integration (removed in 0.5.0 after 0.3 and 0.4 tried page windows and
+  panel slots; the user prefers them in Node-RED). The light entity is the plain master switch. Power off
+  or all pages off = dark: current app "off", black preview, notifications dropped (all pages off keeps new
+  notifications showing).
 - Brightness is a number entity; weather app option "forecast" (daily high/low via
   weather.get_forecasts, cached 30 min).
 - A BLE error whose recovery also failed (`client.disconnect()` timing out with the proxy gone) once

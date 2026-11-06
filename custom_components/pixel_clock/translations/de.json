@@ -23,16 +23,7 @@
         "title": "Display-Einstellungen",
         "description": "Die Seiten selbst richtest du unter der Integration mit „Seite hinzufügen“ ein.",
         "data": {
-          "color": "Standard-Textfarbe",
-          "morning_on": "Morgens ein",
-          "morning_off": "Morgens aus",
-          "midday_on": "Mittags ein",
-          "midday_off": "Mittags aus",
-          "evening_on": "Abends ein",
-          "evening_off": "Abends aus"
-        },
-        "data_description": {
-          "morning_on": "Außerhalb dieser Zeiten ist das Display aus und zeigt auch keine Benachrichtigungen. Alle Felder leer = immer an."
+          "color": "Standard-Textfarbe"
         }
       }
     }
@@ -102,26 +93,6 @@
     "text": {
       "message": {
         "name": "Nachricht"
-      }
-    },
-    "time": {
-      "morning_on": {
-        "name": "Morgens ein"
-      },
-      "morning_off": {
-        "name": "Morgens aus"
-      },
-      "midday_on": {
-        "name": "Mittags ein"
-      },
-      "midday_off": {
-        "name": "Mittags aus"
-      },
-      "evening_on": {
-        "name": "Abends ein"
-      },
-      "evening_off": {
-        "name": "Abends aus"
       }
     }
   },
@@ -320,7 +291,8 @@
         "plasma": "Plasma",
         "snow": "Schnee",
         "rain": "Regen",
-        "pulse": "Pulsieren"
+        "pulse": "Pulsieren",
+        "hearts": "Herzen"
       }
     },
     "icon": {
